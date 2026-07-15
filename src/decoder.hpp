@@ -12,12 +12,16 @@ extern "C" {
 #include <libswresample/swresample.h>
 }
 
+#include <mutex>
+
 #include <string>
 class Decoder {
-
   struct Segment {
     std::vector<AVFrame *> frames;
   };
+
+  // std::mutex mProgressMutex;
+  // int mProgressNum = 0;
 
 public:
   AVFormatContext *fmt_ctx = NULL;
@@ -29,15 +33,14 @@ public:
   int pcm_buf_capacity = 0;
   int pcm_buf_len = 0; /* bytes currently valid   */
   int pcm_buf_pos = 0; /* read cursor into pcm_buf */
-
-  AVPacket *pkt = NULL;
-  std::vector<Segment> mSegments;
+  int eof = 0;
   int seg_counter = 0;
   int frame_counter = 0;
-  AVFrame *holding_frame = nullptr;
-  // AVFrame *frame = NULL;
 
-  int eof = 0;
+  AVPacket *pkt = NULL;
+  std::vector<AVFrame *> mFrames;
+  std::vector<Segment> mSegments;
+  AVFrame *holding_frame = nullptr;
 
   ma_format out_format;
   ma_uint32 out_channels;
@@ -49,10 +52,22 @@ public:
                    int min_silent_frames);
 
 public:
-  Decoder(std::string name);
+  Decoder();
+  void load(std::string name);
+  void unload();
   void setup_resampler();
 
-  void decode(int frame_limit, double silence_threshold, int min_silent_frames);
+  bool decode_once(int frame_limit, int *progress);
+  void finish_decoding(double silence_threshold, int min_silent_frame);
   void write(std::string out_path);
   int play();
+  void reset();
+  void reset_frames();
+
+  // int progress_num() {
+  //   mProgressMutex.lock();
+  //   int prg = mProgressNum;
+  //   mProgressMutex.unlock();
+  //   return prg;
+  // }
 };

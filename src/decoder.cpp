@@ -3,8 +3,9 @@
 #include <algorithm>
 #include <random>
 
-Decoder::Decoder(std::string path) {
-  pkt = av_packet_alloc();
+Decoder::Decoder() { pkt = av_packet_alloc(); }
+
+void Decoder::load(std::string path) {
   if (avformat_open_input(&this->fmt_ctx, path.c_str(), NULL, NULL) < 0) {
     fprintf(stderr, "Failed to open input '%s'\n", path.c_str());
     exit(-1);
@@ -41,6 +42,19 @@ Decoder::Decoder(std::string path) {
   }
 
   return;
+}
+
+void Decoder::unload() {
+  if (this->fmt_ctx)
+    avformat_free_context(this->fmt_ctx);
+  if (this->dec_ctx)
+    avcodec_free_context(&this->dec_ctx);
+  if (this->swr_ctx)
+    swr_free(&this->swr_ctx);
+
+  this->fmt_ctx = nullptr;
+  this->fmt_ctx = nullptr;
+  this->swr_ctx = nullptr;
 }
 
 /* Map an AVSampleFormat (post-conversion, always planar-or-interleaved S16
@@ -167,47 +181,51 @@ Decoder::split_on_silence(const std::vector<AVFrame *> &frames,
   return segments;
 }
 
-void Decoder::decode(int frame_limit, double silence_threshold,
-                     int min_silent_frame) {
+bool Decoder::decode_once(int frame_limit, int *progress) {
   int ret = 0;
-  std::vector<AVFrame *> frames;
-  while (1) {
-    AVFrame *frame = av_frame_alloc();
-    ret = avcodec_receive_frame(this->dec_ctx, frame);
-    if (ret == 0) {
-      frames.push_back(frame);
-      if (frames.size() >= 2500) {
-        break;
+  AVFrame *frame = av_frame_alloc();
+
+  *progress = mFrames.size();
+
+  ret = avcodec_receive_frame(this->dec_ctx, frame);
+  if (ret == 0) {
+    mFrames.push_back(frame);
+    if (frame_limit != -1) {
+      if (mFrames.size() >= frame_limit) {
+        printf("frame_limit hit\n");
+        return true;
       }
-    } else if (ret == AVERROR(EAGAIN)) {
-      /* Decoder wants more packets. */
-      int pret = av_read_frame(this->fmt_ctx, this->pkt);
-      if (pret < 0) {
-        /* Flush decoder at EOF. */
-        avcodec_send_packet(this->dec_ctx, NULL);
-        this->eof = 1;
-        continue;
-      }
-      if (this->pkt->stream_index == this->stream_index) {
-        avcodec_send_packet(this->dec_ctx, this->pkt);
-      }
-      av_frame_unref(frame);
-      av_packet_unref(this->pkt);
-    } else {
-      av_frame_unref(frame);
-      if (ret != AVERROR_EOF) {
-        fprintf(stderr, "avcodec_receive_frame error\n");
-      }
-      break;
     }
+  } else if (ret == AVERROR(EAGAIN)) {
+    /* Decoder wants more packets. */
+    int pret = av_read_frame(this->fmt_ctx, this->pkt);
+    if (pret < 0) {
+      /* Flush decoder at EOF. */
+      avcodec_send_packet(this->dec_ctx, NULL);
+      this->eof = 1;
+      return true;
+    }
+    if (this->pkt->stream_index == this->stream_index) {
+      avcodec_send_packet(this->dec_ctx, this->pkt);
+    }
+    av_frame_unref(frame);
+    av_packet_unref(this->pkt);
+    return false;
+  } else {
+    av_frame_unref(frame);
+    if (ret != AVERROR_EOF) {
+      fprintf(stderr, "avcodec_receive_frame error\n");
+    }
+    return true;
   }
 
-  // auto rng = std::default_random_engine{};
-  // std::shuffle(std::begin(frames), std::end(frames), rng);
+  return false;
+}
 
-  printf("prepared (%ld frames)\n", frames.size());
+void Decoder::finish_decoding(double silence_threshold, int min_silent_frame) {
+  printf("prepared (%ld frames)\n", mFrames.size());
 
-  mSegments = split_on_silence(frames, silence_threshold, min_silent_frame);
+  mSegments = split_on_silence(mFrames, silence_threshold, min_silent_frame);
 
   auto rng = std::default_random_engine{};
   std::shuffle(std::begin(mSegments), std::end(mSegments), rng);
@@ -218,12 +236,13 @@ void Decoder::decode(int frame_limit, double silence_threshold,
 /* Decode the next packet(s) until we get a frame's worth of converted PCM
  * into st->pcm_buf. Returns 0 on success, AVERROR_EOF at end of stream. */
 int Decoder::play() {
-
-  printf("segment %d, frame %d\n", seg_counter, frame_counter);
+  // mProgressMutex.lock();
+  // mProgressNum++;
+  // mProgressMutex.unlock();
 
   while (1) {
-    if (seg_counter < mSegments.size() - 1) {
-      auto frames = mSegments[seg_counter].frames;
+    if (seg_counter < mSegments.size() - 1 && mSegments.size() != 0) {
+      auto frames = mSegments.at(seg_counter).frames;
       if (frame_counter++ < frames.size() - 1 && frames.size() != 0) {
         AVFrame *frame = frames[frame_counter];
         /* Got a frame: convert it. */
@@ -248,7 +267,6 @@ int Decoder::play() {
         this->pcm_buf_len = converted * this->out_channels *
                             av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
         this->pcm_buf_pos = 0;
-        av_frame_unref(frame);
       } else {
         seg_counter++;
         frame_counter = 0;
@@ -256,5 +274,30 @@ int Decoder::play() {
       return 0;
     }
   }
+
   return true;
+}
+
+void Decoder::reset() {
+  seg_counter = 0;
+  frame_counter = 0;
+  pcm_buf = NULL;
+  pcm_buf_capacity = 0;
+  pcm_buf_len = 0;
+  pcm_buf_pos = 0;
+  eof = 0;
+  // mProgressNum = 0;
+}
+
+void Decoder::reset_frames() {
+  for (auto seg : mSegments) {
+    for (auto frame : seg.frames) {
+      av_frame_unref(frame);
+    }
+  }
+  for (auto frame : mFrames) {
+    av_frame_unref(frame);
+  }
+  mSegments.erase(mSegments.begin(), mSegments.end());
+  mFrames.erase(mFrames.begin(), mFrames.end());
 }
