@@ -24,4 +24,10 @@ target_link_libraries(${PROJECT_NAME}
     Mw
 )
 
+if(UNIX)
+  find_package(DBus1 REQUIRED)
+  target_include_directories(${PROJECT_NAME} PRIVATE ${DBus1_INCLUDE_DIRS})
+  target_link_libraries(${PROJECT_NAME} ${DBus1_LIBRARIES})
+endif()
+
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/milsko/include/)

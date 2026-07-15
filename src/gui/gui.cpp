@@ -85,26 +85,11 @@ void GUI::loop() {
     if (mDoDecoding) {
       this->scramble_tick();
     }
+    if (mDoDBusLoop) {
+      GUI::dbus_tick(NULL, &mDBus, NULL);
+    }
   }
 }
-
-void GUI::file_handler(MwWidget handle, void *user_data, void *call_data) {
-  GUI *self = (GUI *)user_data;
-  char *file_data = (char *)call_data;
-
-  MwVaApply(self->mInputPreview, MwNtext, file_data, NULL);
-  MwVaApply(self->mScrambleButton, MwNdisabled, 0, NULL);
-  MwVaApply(self->mPlayPauseButton, MwNdisabled, 1, NULL);
-  MwVaApply(self->mStopButton, MwNdisabled, 1, NULL);
-};
-void GUI::file_button_handler(MwWidget handle, void *user_data,
-                              void *call_data) {
-  GUI *self = (GUI *)user_data;
-
-  self->mFileChooser = MwFileChooser(handle, "Choose file");
-  MwAddUserHandler(self->mFileChooser, MwNfileChosenHandler, GUI::file_handler,
-                   self);
-};
 
 void GUI::scramble_button_handler(MwWidget handle, void *user_data,
                                   void *call_data) {
@@ -175,10 +160,6 @@ void GUI::scramble_tick() {
     printf("%0.2f %d\n", silence_threshold, min_silent_frames);
 
     mDecoder.finish_decoding(silence_threshold, min_silent_frames);
-    // int ind = shgeti(handle->handler, MwNtickHandler);
-    // arrfree(handle->handler[ind].value);
-
-    // MwAddUserHandler(mWindow, MwNtickHandler, GUI::play_tick, self);
 
     mDoDecoding = MwFALSE;
 
@@ -199,9 +180,6 @@ void GUI::scramble_tick() {
   MwVaApply(mFrameNumberShower, MwNtext, prg, NULL);
 }
 
-// void GUI::play_tick(MwWidget handle, void *user_data, void *call_data) {
-//   GUI *self = (GUI *)user_data;
-// };
 void GUI::do_play(MwWidget handle, void *user_data, void *call_data) {
   GUI *self = (GUI *)user_data;
   self->mDecoder.reset();
