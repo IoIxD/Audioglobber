@@ -6,9 +6,8 @@
 GUI::GUI() {
   MwLibraryInit();
 
-  mWindow =
-      MwVaCreateWidget(MwWindowClass, "", NULL, MwDEFAULT, MwDEFAULT, 690, 350,
-                       MwNtitle, "nonsenseCommercialGenerator", NULL);
+  mWindow = MwVaCreateWidget(MwWindowClass, "", NULL, MwDEFAULT, MwDEFAULT, 690,
+                             350, MwNtitle, "Audioglobber", NULL);
 
   mVertBox = MwVaCreateWidget(MwBoxClass, "", mWindow, 25, 50, 640, 250,
                               MwNorientation, MwVERTICAL, MwNratio, 1, NULL);

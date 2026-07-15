@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17)
-project(nonsenseCommercialGenerator)
+project(audioglobber)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
