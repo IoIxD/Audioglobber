@@ -1,9 +1,11 @@
 #include "gui.hpp"
 
 #include "../sound.hpp"
+#include <MNFM.h>
 
 GUI::GUI() {
   MwLibraryInit();
+  MNFMLibraryInit();
 
   mWindow = MwVaCreateWidget(MwWindowClass, "", NULL, MwDEFAULT, MwDEFAULT, 690,
                              350, MwNtitle, "Audioglobber", NULL);
@@ -84,7 +86,6 @@ void GUI::loop() {
     if (mDoDecoding) {
       this->scramble_tick();
     }
-
   }
 }
 

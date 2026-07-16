@@ -4,17 +4,6 @@
 
 #include "../decoder.hpp"
 
-#ifdef __linux__
-#include <dbus/dbus.h>
-struct file_chooser_handler_ctx {
-  int status;
-  MwUserHandler callback;
-  class GUI *gui;
-  void (*onError)(std::string err, void *ud);
-  void *onError_ud;
-};
-#endif
-
 class GUI {
   MwWidget mWindow;
   MwWidget mVertBox;
