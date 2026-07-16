@@ -1,5 +1,4 @@
 #include "gui.hpp"
-#include "stb_ds.h"
 
 #include "../sound.hpp"
 
@@ -85,9 +84,7 @@ void GUI::loop() {
     if (mDoDecoding) {
       this->scramble_tick();
     }
-    if (mDoDBusLoop) {
-      GUI::dbus_tick(NULL, &mDBus, NULL);
-    }
+
   }
 }
 

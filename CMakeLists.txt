@@ -14,20 +14,21 @@ pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
     libavutil
 )
 
-add_subdirectory(milsko)
+set(MW_USE_FREETYPE2 OFF)
+set(MW_USE_STB_TRUETYPE ON)
+add_subdirectory(submodules/milsko)
 
 file(GLOB_RECURSE sources src/*.cpp)
 add_executable(${PROJECT_NAME} ${sources})
 
 target_link_libraries(${PROJECT_NAME}
+    PUBLIC
     PkgConfig::LIBAV
     Mw
+    MNFM
 )
 
-if(UNIX)
-  find_package(DBus1 REQUIRED)
-  target_include_directories(${PROJECT_NAME} PRIVATE ${DBus1_INCLUDE_DIRS})
-  target_link_libraries(${PROJECT_NAME} ${DBus1_LIBRARIES})
-endif()
+add_subdirectory(submodules/MilskoNativeFileManager)
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/milsko/include/)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/submodules/milsko/include/)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/submodules/MilskoNativeFileManager/include/)

@@ -1,3 +1,6 @@
 [submodule "milsko"]
-	path = milsko
-	url = git@github.com:pyrite-dev/milsko.git
+	path = submodules/milsko
+	url = https://github.com/pyrite-dev/milsko.git
+[submodule "submodules/MilskoNativeFileManager"]
+	path = submodules/MilskoNativeFileManager
+	url = https://github.com/IoIxD/MilskoNativeFileManager.git
