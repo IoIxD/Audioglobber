@@ -81,8 +81,10 @@ GUI::GUI() {
 }
 
 void GUI::loop() {
-  while (true) {
-    MwStep(mWindow);
+  while (!MwWindowShouldClose(mWindow)) {
+    while(MwPending(mWindow)) {
+      MwStep(mWindow);
+    }
     if (mDoDecoding) {
       this->scramble_tick();
     }
