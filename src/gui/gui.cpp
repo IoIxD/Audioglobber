@@ -7,76 +7,76 @@ GUI::GUI() {
   MwLibraryInit();
   MNFMLibraryInit();
 
-  mWindow = MwVaCreateWidget(MwWindowClass, "", NULL, MwDEFAULT, MwDEFAULT, 690,
+  mWindow = MwVaCreateWidget(MwWindowClass, NULL, NULL, MwDEFAULT, MwDEFAULT, 690,
                              350, MwNtitle, "Audioglobber", NULL);
 
-  mVertBox = MwVaCreateWidget(MwBoxClass, "", mWindow, 25, 50, 640, 250,
+  mVertBox = MwVaCreateWidget(MwBoxClass, NULL, mWindow, 25, 50, 640, 250,
                               MwNorientation, MwVERTICAL, MwNratio, 1, NULL);
 
   mInputBox =
-      MwVaCreateWidget(MwBoxClass, "", mVertBox, 0, 0, 1, 1, MwNratio, 1);
-  mInputLabel = MwVaCreateWidget(MwLabelClass, "", mInputBox, 0, 0, 1, 1,
+      MwVaCreateWidget(MwBoxClass, NULL, mVertBox, 0, 0, 1, 1, MwNratio, 1);
+  mInputLabel = MwVaCreateWidget(MwLabelClass, NULL, mInputBox, 0, 0, 1, 1,
                                  MwNtext, "Input File", NULL);
-  mInputPreview = MwVaCreateWidget(MwLabelClass, "", mInputBox, 0, 0, 1, 1,
+  mInputPreview = MwVaCreateWidget(MwLabelClass, NULL, mInputBox, 0, 0, 1, 1,
                                    MwNdisabled, 1, MwNratio, 6, NULL);
-  mInputChoose = MwVaCreateWidget(MwButtonClass, "", mInputBox, 0, 0, 1, 1,
+  mInputChoose = MwVaCreateWidget(MwButtonClass, NULL, mInputBox, 0, 0, 1, 1,
                                   MwNtext, "Choose", NULL);
 
   MwAddUserHandler(mInputChoose, MwNactivateHandler, GUI::file_button_handler,
                    this);
 
-  mScrambleButton = MwVaCreateWidget(MwButtonClass, "", mVertBox, 0, 0, 1, 1,
+  mScrambleButton = MwVaCreateWidget(MwButtonClass, NULL, mVertBox, 0, 0, 1, 1,
                                      MwNtext, "Scramble", MwNdisabled, 1, NULL);
   MwAddUserHandler(mScrambleButton, MwNactivateHandler,
                    GUI::scramble_button_handler, this);
 
   mFrameNumberShower =
-      MwVaCreateWidget(MwLabelClass, "", mVertBox, 0, 0, 1, 1, MwNtext,
+      MwVaCreateWidget(MwLabelClass, NULL, mVertBox, 0, 0, 1, 1, MwNtext,
                        "0 frames decoded", MwNratio, 1, NULL);
 
   /* seperator */
-  MwCreateWidget(MwSeparatorClass, "", mVertBox, 0, 0, 1, 1);
+  MwCreateWidget(MwSeparatorClass, NULL, mVertBox, 0, 0, 1, 1);
 
   mControlBox =
-      MwVaCreateWidget(MwBoxClass, "", mVertBox, 0, 0, 1, 1, MwNratio, 1);
+      MwVaCreateWidget(MwBoxClass, NULL, mVertBox, 0, 0, 1, 1, MwNratio, 1);
   mPlayPauseButton =
-      MwVaCreateWidget(MwButtonClass, "", mControlBox, 0, 0, 1, 1, MwNtext,
+      MwVaCreateWidget(MwButtonClass, NULL, mControlBox, 0, 0, 1, 1, MwNtext,
                        "Start", MwNdisabled, 1, NULL);
   MwAddUserHandler(mPlayPauseButton, MwNactivateHandler, GUI::do_play, this);
 
-  mStopButton = MwVaCreateWidget(MwButtonClass, "", mControlBox, 0, 0, 1, 1,
+  mStopButton = MwVaCreateWidget(MwButtonClass, NULL, mControlBox, 0, 0, 1, 1,
                                  MwNtext, "Stop", MwNdisabled, 1, NULL);
   MwAddUserHandler(mStopButton, MwNactivateHandler, GUI::stop, this);
 
   /* seperator */
-  MwCreateWidget(MwSeparatorClass, "", mVertBox, 0, 0, 1, 1);
+  MwCreateWidget(MwSeparatorClass, NULL, mVertBox, 0, 0, 1, 1);
 
-  mOptionsBox = MwVaCreateWidget(MwBoxClass, "", mVertBox, 0, 0, 2, 1,
+  mOptionsBox = MwVaCreateWidget(MwBoxClass, NULL, mVertBox, 0, 0, 2, 1,
                                  MwNorientation, MwVERTICAL, MwNratio, 5, NULL);
   mOptionsBoxFrameLimit =
-      MwCreateWidget(MwBoxClass, "", mOptionsBox, 0, 0, 1, 1);
+      MwCreateWidget(MwBoxClass, NULL, mOptionsBox, 0, 0, 1, 1);
   mOptionsBoxMinSilentFrames =
-      MwCreateWidget(MwBoxClass, "", mOptionsBox, 0, 0, 1, 1);
+      MwCreateWidget(MwBoxClass, NULL, mOptionsBox, 0, 0, 1, 1);
   mOptionsBoxSilenceThreshold =
-      MwCreateWidget(MwBoxClass, "", mOptionsBox, 0, 0, 1, 1);
+      MwCreateWidget(MwBoxClass, NULL, mOptionsBox, 0, 0, 1, 1);
 
   mOptionsLabelFrameLimit =
-      MwVaCreateWidget(MwLabelClass, "", mOptionsBoxFrameLimit, 0, 0, 640, 1,
+      MwVaCreateWidget(MwLabelClass, NULL, mOptionsBoxFrameLimit, 0, 0, 640, 1,
                        MwNtext, "Frame Limit", MwNratio, 1, NULL);
   mOptionsLabelMinSilentFrames =
-      MwVaCreateWidget(MwLabelClass, "", mOptionsBoxMinSilentFrames, 0, 0, 640,
+      MwVaCreateWidget(MwLabelClass, NULL, mOptionsBoxMinSilentFrames, 0, 0, 640,
                        1, MwNtext, "Minimum Silent Frames", MwNratio, 1, NULL);
   mOptionsLabelSilenceThreshold =
-      MwVaCreateWidget(MwLabelClass, "", mOptionsBoxSilenceThreshold, 0, 0, 640,
+      MwVaCreateWidget(MwLabelClass, NULL, mOptionsBoxSilenceThreshold, 0, 0, 640,
                        1, MwNtext, "Silence Threshold", MwNratio, 1, NULL);
 
   mOptionsInputFrameLimit = MwVaCreateWidget(
-      MwEntryClass, "", mOptionsBoxFrameLimit, 0, 0, 1, 1, NULL);
+      MwEntryClass, NULL, mOptionsBoxFrameLimit, 0, 0, 1, 1, NULL);
   mOptionsInputMinSilentFrames =
-      MwVaCreateWidget(MwEntryClass, "", mOptionsBoxMinSilentFrames, 0, 0, 1, 1,
+      MwVaCreateWidget(MwEntryClass, NULL, mOptionsBoxMinSilentFrames, 0, 0, 1, 1,
                        MwNtext, "3", NULL);
   mOptionsInputSilenceThreshold =
-      MwVaCreateWidget(MwEntryClass, "", mOptionsBoxSilenceThreshold, 0, 0, 1,
+      MwVaCreateWidget(MwEntryClass, NULL, mOptionsBoxSilenceThreshold, 0, 0, 1,
                        1, MwNtext, "0.01", NULL);
 }
 
