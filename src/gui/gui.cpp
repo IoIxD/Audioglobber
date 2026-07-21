@@ -3,53 +3,62 @@
 #include "../sound.hpp"
 #include <MNFM.h>
 
+#include "icons/open.h"
+#include "icons/play.h"
+#include "icons/save.h"
+#include "icons/stop.h"
+
 GUI::GUI() {
+  MwSizeHints hints;
+
+  hints.min_width = hints.max_width = 560;
+  hints.min_height = hints.max_height = 225;
+
   MwLibraryInit();
   MNFMLibraryInit();
 
-  mWindow = MwVaCreateWidget(MwWindowClass, NULL, NULL, MwDEFAULT, MwDEFAULT, 690,
-                             350, MwNtitle, "Audioglobber", NULL);
+  mWindow = MwVaCreateWidget(MwWindowClass, NULL, NULL, MwDEFAULT, MwDEFAULT,
+                             hints.min_width, hints.min_height, MwNtitle,
+                             "Audioglobber", MwNsizeHints, &hints, NULL);
 
-  mVertBox = MwVaCreateWidget(MwBoxClass, NULL, mWindow, 25, 50, 640, 250,
+  mVertBox = MwVaCreateWidget(MwBoxClass, NULL, mWindow, 25, 25,
+                              hints.max_width - 80, hints.max_height - 50,
                               MwNorientation, MwVERTICAL, MwNratio, 1, NULL);
 
   mInputBox =
       MwVaCreateWidget(MwBoxClass, NULL, mVertBox, 0, 0, 1, 1, MwNratio, 1);
   mInputLabel = MwVaCreateWidget(MwLabelClass, NULL, mInputBox, 0, 0, 1, 1,
-                                 MwNtext, "Input File", NULL);
+                                 MwNtext, "Input File:", NULL);
   mInputPreview = MwVaCreateWidget(MwLabelClass, NULL, mInputBox, 0, 0, 1, 1,
                                    MwNdisabled, 1, MwNratio, 6, NULL);
-  mInputChoose = MwVaCreateWidget(MwButtonClass, NULL, mInputBox, 0, 0, 1, 1,
-                                  MwNtext, "Choose", NULL);
-
-  MwAddUserHandler(mInputChoose, MwNactivateHandler, GUI::file_button_handler,
-                   this);
 
   mScrambleButton = MwVaCreateWidget(MwButtonClass, NULL, mVertBox, 0, 0, 1, 1,
                                      MwNtext, "Scramble", MwNdisabled, 1, NULL);
   MwAddUserHandler(mScrambleButton, MwNactivateHandler,
                    GUI::scramble_button_handler, this);
 
-  mFrameNumberShower =
-      MwVaCreateWidget(MwLabelClass, NULL, mVertBox, 0, 0, 1, 1, MwNtext,
-                       "0 frames decoded", MwNratio, 1, NULL);
+  mPlayImage = MwLoadRaw(mWindow, (unsigned char *)gPlayImage.pixel_data,
+                         gPlayImage.width, gPlayImage.height);
+  mStopImage = MwLoadRaw(mWindow, (unsigned char *)gStopImage.pixel_data,
+                         gStopImage.width, gStopImage.height);
+  mSaveImage = MwLoadRaw(mWindow, (unsigned char *)gSaveImage.pixel_data,
+                         gSaveImage.width, gSaveImage.height);
+  mOpenImage = MwLoadRaw(mWindow, (unsigned char *)gOpenImage.pixel_data,
+                         gOpenImage.width, gOpenImage.height);
 
-  /* seperator */
-  MwCreateWidget(MwSeparatorClass, NULL, mVertBox, 0, 0, 1, 1);
-
-  mControlBox =
-      MwVaCreateWidget(MwBoxClass, NULL, mVertBox, 0, 0, 1, 1, MwNratio, 1);
-  mPlayPauseButton =
-      MwVaCreateWidget(MwButtonClass, NULL, mControlBox, 0, 0, 1, 1, MwNtext,
-                       "Start", MwNdisabled, 1, NULL);
-  MwAddUserHandler(mPlayPauseButton, MwNactivateHandler, GUI::do_play, this);
-
-  mStopButton = MwVaCreateWidget(MwButtonClass, NULL, mControlBox, 0, 0, 1, 1,
-                                 MwNtext, "Stop", MwNdisabled, 1, NULL);
-  MwAddUserHandler(mStopButton, MwNactivateHandler, GUI::stop, this);
-
-  /* seperator */
-  MwCreateWidget(MwSeparatorClass, NULL, mVertBox, 0, 0, 1, 1);
+  mExportButton =
+      MwVaCreateWidget(MwButtonClass, NULL, mWindow, 480 + 32, 34 + 25, 34, 34,
+                       MwNpixmap, mSaveImage, MwNdisabled, 1, NULL);
+  MwAddUserHandler(mExportButton, MwNactivateHandler, GUI::save_button_handler,
+                   this);
+  mFileButton = MwVaCreateWidget(MwButtonClass, NULL, mWindow, 480 + 32, 25, 34,
+                                 34, MwNpixmap, mOpenImage, NULL);
+  MwAddUserHandler(mFileButton, MwNactivateHandler, GUI::file_button_handler,
+                   this);
+  mPlayStopButton =
+      MwVaCreateWidget(MwButtonClass, NULL, mWindow, 480 + 32, 34 + 34 + 25, 34,
+                       34, MwNpixmap, mPlayImage, MwNdisabled, 1, NULL);
+  MwAddUserHandler(mPlayStopButton, MwNactivateHandler, GUI::play_stop, this);
 
   mOptionsBox = MwVaCreateWidget(MwBoxClass, NULL, mVertBox, 0, 0, 2, 1,
                                  MwNorientation, MwVERTICAL, MwNratio, 5, NULL);
@@ -63,26 +72,29 @@ GUI::GUI() {
   mOptionsLabelFrameLimit =
       MwVaCreateWidget(MwLabelClass, NULL, mOptionsBoxFrameLimit, 0, 0, 640, 1,
                        MwNtext, "Frame Limit", MwNratio, 1, NULL);
-  mOptionsLabelMinSilentFrames =
-      MwVaCreateWidget(MwLabelClass, NULL, mOptionsBoxMinSilentFrames, 0, 0, 640,
-                       1, MwNtext, "Minimum Silent Frames", MwNratio, 1, NULL);
+  mOptionsLabelMinSilentFrames = MwVaCreateWidget(
+      MwLabelClass, NULL, mOptionsBoxMinSilentFrames, 0, 0, 640, 1, MwNtext,
+      "Minimum Silent Frames", MwNratio, 1, NULL);
   mOptionsLabelSilenceThreshold =
-      MwVaCreateWidget(MwLabelClass, NULL, mOptionsBoxSilenceThreshold, 0, 0, 640,
-                       1, MwNtext, "Silence Threshold", MwNratio, 1, NULL);
+      MwVaCreateWidget(MwLabelClass, NULL, mOptionsBoxSilenceThreshold, 0, 0,
+                       640, 1, MwNtext, "Silence Threshold", MwNratio, 1, NULL);
 
   mOptionsInputFrameLimit = MwVaCreateWidget(
       MwEntryClass, NULL, mOptionsBoxFrameLimit, 0, 0, 1, 1, NULL);
   mOptionsInputMinSilentFrames =
-      MwVaCreateWidget(MwEntryClass, NULL, mOptionsBoxMinSilentFrames, 0, 0, 1, 1,
-                       MwNtext, "3", NULL);
+      MwVaCreateWidget(MwEntryClass, NULL, mOptionsBoxMinSilentFrames, 0, 0, 1,
+                       1, MwNtext, "3", NULL);
   mOptionsInputSilenceThreshold =
       MwVaCreateWidget(MwEntryClass, NULL, mOptionsBoxSilenceThreshold, 0, 0, 1,
                        1, MwNtext, "0.01", NULL);
+
+  mStatusBar = MwVaCreateWidget(MwLabelClass, NULL, mVertBox, 0, 0, 1, 1,
+                                MwNratio, 1, NULL);
 }
 
 void GUI::loop() {
   while (!MwWindowShouldClose(mWindow)) {
-    while(MwPending(mWindow)) {
+    while (MwPending(mWindow)) {
       MwStep(mWindow);
     }
     if (mDoDecoding) {
@@ -115,7 +127,7 @@ void GUI::scramble_button_handler(MwWidget handle, void *user_data,
   } else {
     self->mDoDecoding = MwTRUE;
     MwVaApply(self->mScrambleButton, MwNdisabled, 1, NULL);
-    MwVaApply(self->mInputChoose, MwNdisabled, 1, NULL);
+    MwVaApply(self->mFileButton, MwNdisabled, 1, NULL);
   }
 }
 
@@ -157,38 +169,44 @@ void GUI::scramble_tick() {
              ex.what());
     }
 
-    printf("%0.2f %d\n", silence_threshold, min_silent_frames);
+    MwVaApply(mStatusBar, MwNtext, "Scrambling...", NULL);
+    MwForceRender(mStatusBar);
 
     mDecoder.finish_decoding(silence_threshold, min_silent_frames);
 
+    MwVaApply(mStatusBar, MwNtext, "Done", NULL);
+    MwForceRender(mStatusBar);
+
     mDoDecoding = MwFALSE;
 
-    MwVaApply(mInputChoose, MwNdisabled, 0, NULL);
+    MwVaApply(mFileButton, MwNdisabled, 0, NULL);
 
-    MwVaApply(mPlayPauseButton, MwNdisabled, 0, NULL);
-    MwVaApply(mStopButton, MwNdisabled, 0, NULL);
+    MwVaApply(mPlayStopButton, MwNdisabled, 0, NULL);
     MwVaApply(mScrambleButton, MwNdisabled, 0, NULL);
-    MwVaApply(mInputChoose, MwNdisabled, 0, NULL);
+    MwVaApply(mExportButton, MwNdisabled, 0, NULL);
+    MwVaApply(mFileButton, MwNdisabled, 0, NULL);
 
     MwForceRender(mWindow);
-    MwForceRender(mPlayPauseButton);
-    MwForceRender(mStopButton);
+    MwForceRender(mPlayStopButton);
+    MwForceRender(mExportButton);
 
     mDecoder.reset();
+  } else {
+    snprintf(prg, 255, "%d frames decoded", progress, NULL);
+    MwVaApply(mStatusBar, MwNtext, prg, NULL);
   }
-  snprintf(prg, 255, "%d frames decoded", progress, NULL);
-  MwVaApply(mFrameNumberShower, MwNtext, prg, NULL);
 }
 
-void GUI::do_play(MwWidget handle, void *user_data, void *call_data) {
+void GUI::play_stop(MwWidget handle, void *user_data, void *call_data) {
   GUI *self = (GUI *)user_data;
   self->mDecoder.reset();
 
-  ma_device_start(&self->mDevice);
-};
-void GUI::stop(MwWidget handle, void *user_data, void *call_data) {
-  GUI *self = (GUI *)user_data;
-
-  ma_device_stop(&self->mDevice);
-  self->mDecoder.reset();
+  if (!self->mPlaying) {
+    ma_device_start(&self->mDevice);
+    MwSetVoid(self->mPlayStopButton, MwNpixmap, self->mStopImage);
+  } else {
+    ma_device_stop(&self->mDevice);
+    MwSetVoid(self->mPlayStopButton, MwNpixmap, self->mPlayImage);
+  }
+  self->mPlaying = !self->mPlaying;
 };

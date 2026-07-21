@@ -181,6 +181,155 @@ Decoder::split_on_silence(const std::vector<AVFrame *> &frames,
   return segments;
 }
 
+// Writes all frames from all segments to a single WAV file at `path`,
+// concatenated in order.
+void Decoder::write(std::string path) {
+  AVFormatContext *out_ctx = nullptr;
+  int ret =
+      avformat_alloc_output_context2(&out_ctx, nullptr, "wav", path.c_str());
+  if (!out_ctx) {
+    fprintf(stderr, "Could not create output context for '%s'\n", path.c_str());
+    return;
+  }
+
+  const AVCodec *encoder = avcodec_find_encoder(AV_CODEC_ID_PCM_S16LE);
+  if (!encoder) {
+    fprintf(stderr, "PCM S16LE encoder not found\n");
+    avformat_free_context(out_ctx);
+    return;
+  }
+
+  AVStream *stream = avformat_new_stream(out_ctx, nullptr);
+  if (!stream) {
+    fprintf(stderr, "Failed to create output stream\n");
+    avformat_free_context(out_ctx);
+    return;
+  }
+
+  AVCodecContext *enc_ctx = avcodec_alloc_context3(encoder);
+  enc_ctx->sample_rate = dec_ctx->sample_rate;
+  av_channel_layout_copy(&enc_ctx->ch_layout, &dec_ctx->ch_layout);
+  enc_ctx->sample_fmt = AV_SAMPLE_FMT_S16;
+  enc_ctx->time_base = (AVRational){1, dec_ctx->sample_rate};
+
+  if (out_ctx->oformat->flags & AVFMT_GLOBALHEADER)
+    enc_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
+  ret = avcodec_open2(enc_ctx, encoder, nullptr);
+  if (ret < 0) {
+    fprintf(stderr, "Failed to open encoder\n");
+    avcodec_free_context(&enc_ctx);
+    avformat_free_context(out_ctx);
+    return;
+  }
+
+  avcodec_parameters_from_context(stream->codecpar, enc_ctx);
+  stream->time_base = enc_ctx->time_base;
+
+  if (!(out_ctx->oformat->flags & AVFMT_NOFILE)) {
+    ret = avio_open(&out_ctx->pb, path.c_str(), AVIO_FLAG_WRITE);
+    if (ret < 0) {
+      fprintf(stderr, "Could not open '%s' for writing\n", path.c_str());
+      avcodec_free_context(&enc_ctx);
+      avformat_free_context(out_ctx);
+      return;
+    }
+  }
+
+  ret = avformat_write_header(out_ctx, nullptr);
+  if (ret < 0) {
+    fprintf(stderr, "Failed to write header\n");
+    goto cleanup;
+  }
+
+  {
+    SwrContext *swr = nullptr;
+    swr_alloc_set_opts2(&swr, &enc_ctx->ch_layout, AV_SAMPLE_FMT_S16,
+                        enc_ctx->sample_rate, &dec_ctx->ch_layout,
+                        dec_ctx->sample_fmt, dec_ctx->sample_rate, 0, nullptr);
+    if (!swr || swr_init(swr) < 0) {
+      fprintf(stderr, "Failed to init resampler\n");
+      ret = -1;
+      goto cleanup;
+    }
+
+    AVPacket *out_pkt = av_packet_alloc();
+    AVFrame *conv_frame = av_frame_alloc();
+    int64_t pts = 0;
+
+    // Walk every frame in every segment, in order, as one continuous stream.
+    for (const Segment &segment : mSegments) {
+      for (AVFrame *src : segment.frames) {
+        conv_frame->format = AV_SAMPLE_FMT_S16;
+        conv_frame->sample_rate = enc_ctx->sample_rate;
+        av_channel_layout_copy(&conv_frame->ch_layout, &enc_ctx->ch_layout);
+        conv_frame->nb_samples = swr_get_out_samples(swr, src->nb_samples);
+
+        if (av_frame_get_buffer(conv_frame, 0) < 0) {
+          fprintf(stderr, "Failed to allocate conversion buffer\n");
+          break;
+        }
+
+        int converted =
+            swr_convert(swr, conv_frame->data, conv_frame->nb_samples,
+                        (const uint8_t **)src->extended_data, src->nb_samples);
+        if (converted < 0) {
+          fprintf(stderr, "swr_convert failed\n");
+          av_frame_unref(conv_frame);
+          break;
+        }
+        conv_frame->nb_samples = converted;
+        conv_frame->pts = pts;
+        pts += converted;
+
+        ret = avcodec_send_frame(enc_ctx, conv_frame);
+        av_frame_unref(conv_frame);
+        if (ret < 0) {
+          fprintf(stderr, "avcodec_send_frame failed\n");
+          break;
+        }
+
+        while (ret >= 0) {
+          ret = avcodec_receive_packet(enc_ctx, out_pkt);
+          if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+            ret = 0;
+            break;
+          } else if (ret < 0) {
+            fprintf(stderr, "avcodec_receive_packet failed\n");
+            break;
+          }
+          av_packet_rescale_ts(out_pkt, enc_ctx->time_base, stream->time_base);
+          out_pkt->stream_index = stream->index;
+          av_interleaved_write_frame(out_ctx, out_pkt);
+          av_packet_unref(out_pkt);
+        }
+      }
+    }
+
+    // Flush encoder.
+    avcodec_send_frame(enc_ctx, nullptr);
+    while (avcodec_receive_packet(enc_ctx, out_pkt) == 0) {
+      av_packet_rescale_ts(out_pkt, enc_ctx->time_base, stream->time_base);
+      out_pkt->stream_index = stream->index;
+      av_interleaved_write_frame(out_ctx, out_pkt);
+      av_packet_unref(out_pkt);
+    }
+
+    av_frame_free(&conv_frame);
+    av_packet_free(&out_pkt);
+    swr_free(&swr);
+  }
+
+  av_write_trailer(out_ctx);
+  ret = 0;
+
+cleanup:
+  if (!(out_ctx->oformat->flags & AVFMT_NOFILE))
+    avio_closep(&out_ctx->pb);
+  avcodec_free_context(&enc_ctx);
+  avformat_free_context(out_ctx);
+  return;
+}
 bool Decoder::decode_once(int frame_limit, int *progress) {
   int ret = 0;
   AVFrame *frame = av_frame_alloc();
