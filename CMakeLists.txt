@@ -14,8 +14,7 @@ pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
     libavutil
 )
 
-set(MW_USE_FREETYPE2 OFF)
-set(MW_USE_STB_TRUETYPE ON)
+set(MW_TRY_VULKAN OFF)
 add_subdirectory(submodules/milsko)
 
 file(GLOB_RECURSE sources src/*.cpp)

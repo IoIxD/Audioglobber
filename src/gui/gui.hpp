@@ -45,6 +45,8 @@ class GUI {
   MwLLPixmap mSaveImage;
   MwLLPixmap mOpenImage;
 
+  void setup_icons(MwWidget handle);
+
 public:
   GUI();
   void loop();

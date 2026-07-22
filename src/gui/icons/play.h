@@ -1,6 +1,6 @@
 #pragma once
 
-static const struct {
+static struct {
   int width;
   int height;
   unsigned int bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */

@@ -3,10 +3,6 @@
 #include "../sound.hpp"
 #include <MNFM.h>
 
-#include "icons/open.h"
-#include "icons/play.h"
-#include "icons/save.h"
-#include "icons/stop.h"
 
 GUI::GUI() {
   MwSizeHints hints;
@@ -19,7 +15,12 @@ GUI::GUI() {
 
   mWindow = MwVaCreateWidget(MwWindowClass, NULL, NULL, MwDEFAULT, MwDEFAULT,
                              hints.min_width, hints.min_height, MwNtitle,
-                             "Audioglobber", MwNsizeHints, &hints, NULL);
+                             "Audioglobber", MwNsizeHints, &hints, MwNacceptsDnD, MwTRUE,
+                             NULL);
+
+  MwAddUserHandler(mWindow, MwNdragAndDropHandler, GUI::file_handler, this);
+
+  this->setup_icons(mWindow);
 
   mVertBox = MwVaCreateWidget(MwBoxClass, NULL, mWindow, 25, 25,
                               hints.max_width - 80, hints.max_height - 50,
@@ -36,15 +37,6 @@ GUI::GUI() {
                                      MwNtext, "Scramble", MwNdisabled, 1, NULL);
   MwAddUserHandler(mScrambleButton, MwNactivateHandler,
                    GUI::scramble_button_handler, this);
-
-  mPlayImage = MwLoadRaw(mWindow, (unsigned char *)gPlayImage.pixel_data,
-                         gPlayImage.width, gPlayImage.height);
-  mStopImage = MwLoadRaw(mWindow, (unsigned char *)gStopImage.pixel_data,
-                         gStopImage.width, gStopImage.height);
-  mSaveImage = MwLoadRaw(mWindow, (unsigned char *)gSaveImage.pixel_data,
-                         gSaveImage.width, gSaveImage.height);
-  mOpenImage = MwLoadRaw(mWindow, (unsigned char *)gOpenImage.pixel_data,
-                         gOpenImage.width, gOpenImage.height);
 
   mExportButton =
       MwVaCreateWidget(MwButtonClass, NULL, mWindow, 480 + 32, 34 + 25, 34, 34,
