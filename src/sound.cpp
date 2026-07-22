@@ -1,6 +1,9 @@
 #define MINIAUDIO_IMPLEMENTATION
-#include "sound.hpp"
+#ifdef _WIN32
+#define MA_COINIT_VALUE COINIT_APARTMENTTHREADED
+#endif
 #include "miniaudio.h"
+#include "sound.hpp"
 
 void snd_callback(ma_device *device, void *output, const void *input,
                   ma_uint32 frame_count) {
