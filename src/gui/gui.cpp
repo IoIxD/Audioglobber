@@ -18,7 +18,7 @@ GUI::GUI() {
                              "Audioglobber", MwNsizeHints, &hints, MwNacceptsDnD, MwTRUE,
                              NULL);
 
-  MwAddUserHandler(mWindow, MwNdragAndDropHandler, GUI::file_handler, this);
+  MwAddUserHandler(mWindow, MwNdragAndDropHandler, GUI::drag_and_drop, this);
 
   this->setup_icons(mWindow);
 
@@ -40,7 +40,7 @@ GUI::GUI() {
 
   mExportButton =
       MwVaCreateWidget(MwButtonClass, NULL, mWindow, 480 + 32, 34 + 25, 34, 34,
-                       MwNpixmap, mSaveImage, MwNdisabled, 1, NULL);
+                       MwNpixmap, mSaveImage, NULL);
   MwAddUserHandler(mExportButton, MwNactivateHandler, GUI::save_button_handler,
                    this);
   mFileButton = MwVaCreateWidget(MwButtonClass, NULL, mWindow, 480 + 32, 25, 34,
@@ -49,7 +49,7 @@ GUI::GUI() {
                    this);
   mPlayStopButton =
       MwVaCreateWidget(MwButtonClass, NULL, mWindow, 480 + 32, 34 + 34 + 25, 34,
-                       34, MwNpixmap, mPlayImage, MwNdisabled, 1, NULL);
+                       34, MwNpixmap, mPlayImage, NULL);
   MwAddUserHandler(mPlayStopButton, MwNactivateHandler, GUI::play_stop, this);
 
   mOptionsBox = MwVaCreateWidget(MwBoxClass, NULL, mVertBox, 0, 0, 2, 1,
@@ -119,7 +119,6 @@ void GUI::scramble_button_handler(MwWidget handle, void *user_data,
   } else {
     self->mDoDecoding = MwTRUE;
     MwVaApply(self->mScrambleButton, MwNdisabled, 1, NULL);
-    MwVaApply(self->mFileButton, MwNdisabled, 1, NULL);
   }
 }
 
@@ -127,6 +126,7 @@ void GUI::scramble_tick() {
   int progress = 0;
   char prg[255];
   int frame_limit = -1;
+  printf("%d\n",mDoDecoding);
   const char *frame_limit_text = MwGetText(mOptionsInputFrameLimit, MwNtext);
   if (frame_limit_text) {
     try {
@@ -171,12 +171,7 @@ void GUI::scramble_tick() {
 
     mDoDecoding = MwFALSE;
 
-    MwVaApply(mFileButton, MwNdisabled, 0, NULL);
-
-    MwVaApply(mPlayStopButton, MwNdisabled, 0, NULL);
     MwVaApply(mScrambleButton, MwNdisabled, 0, NULL);
-    MwVaApply(mExportButton, MwNdisabled, 0, NULL);
-    MwVaApply(mFileButton, MwNdisabled, 0, NULL);
 
     MwForceRender(mWindow);
     MwForceRender(mPlayStopButton);

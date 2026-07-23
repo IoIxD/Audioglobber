@@ -1,7 +1,6 @@
 [submodule "milsko"]
 	path = submodules/milsko
 	url = https://forgejo.nishi.boats/pyrite-dev/milsko.git
-	branch = dnd
 [submodule "submodules/MilskoNativeFileManager"]
 	path = submodules/MilskoNativeFileManager
 	url = https://github.com/IoIxD/MilskoNativeFileManager.git

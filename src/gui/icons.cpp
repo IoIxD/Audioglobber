@@ -7,8 +7,7 @@
 
 void GUI::setup_icons(MwWidget handle) {
   auto placeholder = MwGetInteger(handle, MwNdarkTheme);
-  printf("%d\n",placeholder);
-  if (placeholder == 0) {
+  if (placeholder == 1) {
     int i = 0;
     #define BRIGHTEN(img) \
     for (i = 0; i < sizeof(img.pixel_data); i += 4) {\

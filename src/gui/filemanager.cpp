@@ -17,8 +17,6 @@ void GUI::file_handler(MwWidget handle, void *user_data, void *call_data) {
   if (call_data) {
     MwVaApply(self->mInputPreview, MwNtext, file_data, NULL);
     MwVaApply(self->mScrambleButton, MwNdisabled, 0, NULL);
-    MwVaApply(self->mPlayStopButton, MwNdisabled, 1, NULL);
-    MwVaApply(self->mExportButton, MwNdisabled, 1, NULL);
   }
 };
 
@@ -66,4 +64,16 @@ void GUI::save_button_handler(MwWidget handle, void *user_data,
   self->mFileChooser = MNFMOpen(handle, "Save file", MNFMSAVE);
   MwAddUserHandler(self->mFileChooser, MwNfileChosenHandler,
                    GUI::filesave_handler, self);
+};
+
+void GUI::drag_and_drop(MwWidget handle, void *user_data, void *call_data) {
+  GUI *self = (GUI *)user_data;
+  char *file_data = (char *)call_data;
+
+  printf("%s\n",file_data);
+
+  if (call_data) {
+    MwVaApply(self->mInputPreview, MwNtext, file_data, NULL);
+    MwVaApply(self->mScrambleButton, MwNdisabled, 0, NULL);
+  }
 };

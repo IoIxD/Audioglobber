@@ -59,11 +59,11 @@ public:
   static void scramble_button_handler(MwWidget handle, void *user_data,
                                       void *call_data);
   static void error_box_ok(MwWidget handle, void *user, void *call);
-
+  static void drag_and_drop(MwWidget handle, void *user_data,
+                                  void *call_data);
   void start_dbus_filechooser(MwUserHandler handler);
 
   void scramble_tick();
-  // static void play_tick(MwWidget handle, void *user_data, void *call_data);
 
   static void play_stop(MwWidget handle, void *user_data, void *call_data);
   static void save_button_handler(MwWidget handle, void *user_data,
