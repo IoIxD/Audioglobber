@@ -5,7 +5,9 @@
 #include "decoder.hpp"
 #include "gui/gui.hpp"
 #include "miniaudio.h"
-
+#ifdef _WIN32
+#include <windows.h>
+#endif
 int main(int argc, char **argv) {
   GUI gui;
 

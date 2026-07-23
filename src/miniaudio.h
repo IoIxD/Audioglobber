@@ -27558,6 +27558,8 @@ static ma_result ma_device_init__winmm(ma_device* pDevice, const ma_device_confi
     UINT winMMDeviceIDPlayback = 0;
     UINT winMMDeviceIDCapture  = 0;
 
+    printf("whar\n");
+
     MA_ASSERT(pDevice != NULL);
 
     MA_ZERO_OBJECT(&pDevice->winmm);

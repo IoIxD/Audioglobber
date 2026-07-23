@@ -1,6 +1,7 @@
 #define MINIAUDIO_IMPLEMENTATION
 #ifdef _WIN32
 #define MA_COINIT_VALUE COINIT_APARTMENTTHREADED
+#define MA_NO_DSOUND
 #endif
 #include "miniaudio.h"
 #include "sound.hpp"

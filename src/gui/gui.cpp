@@ -20,6 +20,8 @@ GUI::GUI() {
 
   MwAddUserHandler(mWindow, MwNdragAndDropHandler, GUI::drag_and_drop, this);
 
+  MwStep(mWindow);
+
   this->setup_icons(mWindow);
 
   mVertBox = MwVaCreateWidget(MwBoxClass, NULL, mWindow, 25, 25,
@@ -34,7 +36,7 @@ GUI::GUI() {
                                    MwNdisabled, 1, MwNratio, 6, NULL);
 
   mScrambleButton = MwVaCreateWidget(MwButtonClass, NULL, mVertBox, 0, 0, 1, 1,
-                                     MwNtext, "Scramble", MwNdisabled, 1, NULL);
+                                     MwNtext, "Scramble", MwNdisabled, 0, NULL);
   MwAddUserHandler(mScrambleButton, MwNactivateHandler,
                    GUI::scramble_button_handler, this);
 
@@ -99,26 +101,28 @@ void GUI::scramble_button_handler(MwWidget handle, void *user_data,
                                   void *call_data) {
   GUI *self = (GUI *)user_data;
   int err;
+  const char* inputText = self->mFileName;
 
-  self->mDecoder.unload();
-  self->mDecoder.load(MwGetText(self->mInputPreview, MwNtext));
-  self->mDecoder.setup_resampler();
+  if(inputText[0] != '\0') {
+      self->mDecoder.unload();
+      self->mDecoder.load(inputText);
+      self->mDecoder.setup_resampler();
 
-  self->mDecoder.reset_frames();
+      self->mDecoder.reset_frames();
 
-  self->mConfig = ma_device_config_init(ma_device_type_playback);
-  self->mConfig.playback.format = self->mDecoder.out_format;
-  self->mConfig.playback.channels = self->mDecoder.out_channels;
-  self->mConfig.sampleRate = self->mDecoder.out_sample_rate;
-  self->mConfig.dataCallback = snd_callback;
-  self->mConfig.pUserData = &self->mDecoder;
+      memset(&self->mConfig, 0, sizeof(self->mConfig));
+      self->mConfig = ma_device_config_init(ma_device_type_playback);
+      self->mConfig.playback.format = self->mDecoder.out_format;
+      self->mConfig.playback.channels = self->mDecoder.out_channels;
+      self->mConfig.sampleRate = self->mDecoder.out_sample_rate;
+      self->mConfig.dataCallback = snd_callback;
+      self->mConfig.pUserData = &self->mDecoder;
 
-  if ((err = ma_device_init(NULL, &self->mConfig, &self->mDevice)) !=
-      MA_SUCCESS) {
-    fprintf(stderr, "Failed to init playback device, %d\n", err);
+      memset(&self->mDevice, 0, sizeof(self->mDevice));
+      self->mDoDecoding = MwTRUE;
+      MwVaApply(self->mScrambleButton, MwNdisabled, 1, NULL);
   } else {
-    self->mDoDecoding = MwTRUE;
-    MwVaApply(self->mScrambleButton, MwNdisabled, 1, NULL);
+      printf("no file\n");
   }
 }
 
@@ -126,7 +130,6 @@ void GUI::scramble_tick() {
   int progress = 0;
   char prg[255];
   int frame_limit = -1;
-  printf("%d\n",mDoDecoding);
   const char *frame_limit_text = MwGetText(mOptionsInputFrameLimit, MwNtext);
   if (frame_limit_text) {
     try {
@@ -187,6 +190,15 @@ void GUI::scramble_tick() {
 void GUI::play_stop(MwWidget handle, void *user_data, void *call_data) {
   GUI *self = (GUI *)user_data;
   self->mDecoder.reset();
+
+  if(!self->mMaInited) {
+    int err;
+    if ((err = ma_device_init(NULL, &self->mConfig, &self->mDevice)) !=
+        MA_SUCCESS) {
+        printf("Failed to init playback device, %d\n", err);
+    }
+    self->mMaInited = true;
+  }
 
   if (!self->mPlaying) {
     ma_device_start(&self->mDevice);

@@ -27,6 +27,13 @@ target_link_libraries(${PROJECT_NAME}
     MNFM
 )
 
+if(WIN32)
+target_link_libraries(${PROJECT_NAME}
+    PUBLIC
+    dbghelp
+)
+endif()
+
 add_subdirectory(submodules/MilskoNativeFileManager)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/submodules/milsko/include/)

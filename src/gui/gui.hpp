@@ -4,6 +4,12 @@
 
 #include "../decoder.hpp"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+#include <string>
+
 class GUI {
   MwWidget mWindow;
   MwWidget mVertBox;
@@ -33,6 +39,8 @@ class GUI {
   MwWidget mOptionsLabelMinSilentFrames;
   MwWidget mOptionsInputMinSilentFrames;
 
+  bool mMaInited = false;
+
   Decoder mDecoder;
   ma_device_config mConfig;
   ma_device mDevice;
@@ -46,6 +54,7 @@ class GUI {
   MwLLPixmap mOpenImage;
 
   void setup_icons(MwWidget handle);
+  char mFileName[4096];
 
 public:
   GUI();

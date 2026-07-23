@@ -68,12 +68,24 @@ void GUI::save_button_handler(MwWidget handle, void *user_data,
 
 void GUI::drag_and_drop(MwWidget handle, void *user_data, void *call_data) {
   GUI *self = (GUI *)user_data;
-  char *file_data = (char *)call_data;
+  unsigned char *file_data = (unsigned char *)call_data;
+  int i = 0;
+  MwBool is_accepted = MwTRUE;
 
-  printf("%s\n",file_data);
-
-  if (call_data) {
-    MwVaApply(self->mInputPreview, MwNtext, file_data, NULL);
-    MwVaApply(self->mScrambleButton, MwNdisabled, 0, NULL);
+  if (file_data) {
+      for(i = 0; i < strlen((char *)file_data); i++) {
+          if(file_data[i] >= 127) {
+              is_accepted = MwFALSE;
+              break;
+          }
+      }
+      if(!is_accepted) {
+          MwVaApply(self->mStatusBar, MwNtext, "Filename cannot have non-special characters in it.", NULL);
+      } else {
+          memset(self->mFileName, 0, sizeof(self->mFileName));
+          snprintf(self->mFileName, sizeof(self->mFileName), "%s", file_data);
+          MwVaApply(self->mInputPreview, MwNtext, self->mFileName, NULL);
+          MwVaApply(self->mScrambleButton, MwNdisabled, 0, NULL);
+      }
   }
 };
