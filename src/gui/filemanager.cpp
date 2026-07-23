@@ -73,19 +73,9 @@ void GUI::drag_and_drop(MwWidget handle, void *user_data, void *call_data) {
   MwBool is_accepted = MwTRUE;
 
   if (file_data) {
-      for(i = 0; i < strlen((char *)file_data); i++) {
-          if(file_data[i] >= 127) {
-              is_accepted = MwFALSE;
-              break;
-          }
-      }
-      if(!is_accepted) {
-          MwVaApply(self->mStatusBar, MwNtext, "Filename cannot have non-special characters in it.", NULL);
-      } else {
-          memset(self->mFileName, 0, sizeof(self->mFileName));
-          snprintf(self->mFileName, sizeof(self->mFileName), "%s", file_data);
-          MwVaApply(self->mInputPreview, MwNtext, self->mFileName, NULL);
-          MwVaApply(self->mScrambleButton, MwNdisabled, 0, NULL);
-      }
+      memset(self->mFileName, 0, sizeof(self->mFileName));
+      snprintf(self->mFileName, sizeof(self->mFileName), "%s", file_data);
+      MwVaApply(self->mInputPreview, MwNtext, self->mFileName, NULL);
+      MwVaApply(self->mScrambleButton, MwNdisabled, 0, NULL);
   }
 };
