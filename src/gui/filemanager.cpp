@@ -14,8 +14,10 @@ void GUI::file_handler(MwWidget handle, void *user_data, void *call_data) {
   GUI *self = (GUI *)user_data;
   char *file_data = (char *)call_data;
 
-  if (call_data) {
-    MwVaApply(self->mInputPreview, MwNtext, file_data, NULL);
+  if (file_data) {
+    memset(self->mFileName, 0, sizeof(self->mFileName));
+    snprintf(self->mFileName, sizeof(self->mFileName), "%s", file_data);
+    MwVaApply(self->mInputPreview, MwNtext, self->mFileName, NULL);
     MwVaApply(self->mScrambleButton, MwNdisabled, 0, NULL);
   }
 };
@@ -73,9 +75,9 @@ void GUI::drag_and_drop(MwWidget handle, void *user_data, void *call_data) {
   MwBool is_accepted = MwTRUE;
 
   if (file_data) {
-      memset(self->mFileName, 0, sizeof(self->mFileName));
-      snprintf(self->mFileName, sizeof(self->mFileName), "%s", file_data);
-      MwVaApply(self->mInputPreview, MwNtext, self->mFileName, NULL);
-      MwVaApply(self->mScrambleButton, MwNdisabled, 0, NULL);
+    memset(self->mFileName, 0, sizeof(self->mFileName));
+    snprintf(self->mFileName, sizeof(self->mFileName), "%s", file_data);
+    MwVaApply(self->mInputPreview, MwNtext, self->mFileName, NULL);
+    MwVaApply(self->mScrambleButton, MwNdisabled, 0, NULL);
   }
 };

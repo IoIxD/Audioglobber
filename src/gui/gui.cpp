@@ -3,7 +3,6 @@
 #include "../sound.hpp"
 #include <MNFM.h>
 
-
 GUI::GUI() {
   MwSizeHints hints;
 
@@ -15,8 +14,8 @@ GUI::GUI() {
 
   mWindow = MwVaCreateWidget(MwWindowClass, NULL, NULL, MwDEFAULT, MwDEFAULT,
                              hints.min_width, hints.min_height, MwNtitle,
-                             "Audioglobber", MwNsizeHints, &hints, MwNacceptsDnD, MwTRUE,
-                             NULL);
+                             "Audioglobber", MwNsizeHints, &hints,
+                             MwNacceptsDnD, MwTRUE, NULL);
 
   MwAddUserHandler(mWindow, MwNdragAndDropHandler, GUI::drag_and_drop, this);
 
@@ -101,28 +100,31 @@ void GUI::scramble_button_handler(MwWidget handle, void *user_data,
                                   void *call_data) {
   GUI *self = (GUI *)user_data;
   int err;
-  const char* inputText = self->mFileName;
+  const char *inputText = self->mFileName;
+  auto s = std::string(inputText);
 
-  if(inputText[0] != '\0') {
-      self->mDecoder.unload();
-      self->mDecoder.load(inputText);
-      self->mDecoder.setup_resampler();
+  printf("%s\n", s.c_str());
 
-      self->mDecoder.reset_frames();
+  if (!s.empty()) {
+    self->mDecoder.unload();
+    self->mDecoder.load(inputText);
+    self->mDecoder.setup_resampler();
 
-      memset(&self->mConfig, 0, sizeof(self->mConfig));
-      self->mConfig = ma_device_config_init(ma_device_type_playback);
-      self->mConfig.playback.format = self->mDecoder.out_format;
-      self->mConfig.playback.channels = self->mDecoder.out_channels;
-      self->mConfig.sampleRate = self->mDecoder.out_sample_rate;
-      self->mConfig.dataCallback = snd_callback;
-      self->mConfig.pUserData = &self->mDecoder;
+    self->mDecoder.reset_frames();
 
-      memset(&self->mDevice, 0, sizeof(self->mDevice));
-      self->mDoDecoding = MwTRUE;
-      MwVaApply(self->mScrambleButton, MwNdisabled, 1, NULL);
+    memset(&self->mConfig, 0, sizeof(self->mConfig));
+    self->mConfig = ma_device_config_init(ma_device_type_playback);
+    self->mConfig.playback.format = self->mDecoder.out_format;
+    self->mConfig.playback.channels = self->mDecoder.out_channels;
+    self->mConfig.sampleRate = self->mDecoder.out_sample_rate;
+    self->mConfig.dataCallback = snd_callback;
+    self->mConfig.pUserData = &self->mDecoder;
+
+    memset(&self->mDevice, 0, sizeof(self->mDevice));
+    self->mDoDecoding = MwTRUE;
+    MwVaApply(self->mScrambleButton, MwNdisabled, 1, NULL);
   } else {
-      printf("no file\n");
+    printf("no file\n");
   }
 }
 
@@ -191,11 +193,11 @@ void GUI::play_stop(MwWidget handle, void *user_data, void *call_data) {
   GUI *self = (GUI *)user_data;
   self->mDecoder.reset();
 
-  if(!self->mMaInited) {
+  if (!self->mMaInited) {
     int err;
     if ((err = ma_device_init(NULL, &self->mConfig, &self->mDevice)) !=
         MA_SUCCESS) {
-        printf("Failed to init playback device, %d\n", err);
+      printf("Failed to init playback device, %d\n", err);
     }
     self->mMaInited = true;
   }
