@@ -2,4 +2,4 @@
 
 Takes an input audio file, splits it based on silence, jumbles it, then plays the output.
 
-<img width="582" height="277" alt="image" src="https://github.com/user-attachments/assets/917f463a-26eb-4175-af45-f868cce8fdc2" />
+<img width="672" height="365" alt="image" src="https://github.com/user-attachments/assets/6e08e181-ab96-4561-80eb-03098d06fa06" />
