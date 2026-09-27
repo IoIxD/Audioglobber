@@ -132,7 +132,7 @@ void GUI::scramble_tick() {
   int progress = 0;
   char prg[255];
   int frame_limit = -1;
-  const char *frame_limit_text = MwGetText(mOptionsInputFrameLimit, MwNtext);
+  const char *frame_limit_text = MwGetString(mOptionsInputFrameLimit, MwNtext);
   if (frame_limit_text) {
     try {
       frame_limit = std::stoi(frame_limit_text);
@@ -144,9 +144,9 @@ void GUI::scramble_tick() {
     double silence_threshold = 0.01;
     int min_silent_frames = 3;
     const char *silence_threshold_text =
-        MwGetText(mOptionsInputSilenceThreshold, MwNtext);
+        MwGetString(mOptionsInputSilenceThreshold, MwNtext);
     const char *min_silent_frames_text =
-        MwGetText(mOptionsInputMinSilentFrames, MwNtext);
+        MwGetString(mOptionsInputMinSilentFrames, MwNtext);
     try {
       if (silence_threshold_text) {
         silence_threshold = std::stod(silence_threshold_text);
@@ -204,10 +204,10 @@ void GUI::play_stop(MwWidget handle, void *user_data, void *call_data) {
 
   if (!self->mPlaying) {
     ma_device_start(&self->mDevice);
-    MwSetVoid(self->mPlayStopButton, MwNpixmap, self->mStopImage);
+    MwSetPointer(self->mPlayStopButton, MwNpixmap, self->mStopImage);
   } else {
     ma_device_stop(&self->mDevice);
-    MwSetVoid(self->mPlayStopButton, MwNpixmap, self->mPlayImage);
+    MwSetPointer(self->mPlayStopButton, MwNpixmap, self->mPlayImage);
   }
   self->mPlaying = !self->mPlaying;
 };

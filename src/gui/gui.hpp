@@ -48,10 +48,10 @@ class GUI {
   MwBool mDoDecoding = MwFALSE;
   MwBool mPlaying = MwFALSE;
 
-  MwLLPixmap mPlayImage;
-  MwLLPixmap mStopImage;
-  MwLLPixmap mSaveImage;
-  MwLLPixmap mOpenImage;
+  MwPixmap mPlayImage;
+  MwPixmap mStopImage;
+  MwPixmap mSaveImage;
+  MwPixmap mOpenImage;
 
   void setup_icons(MwWidget handle);
   char mFileName[4096];
@@ -68,8 +68,7 @@ public:
   static void scramble_button_handler(MwWidget handle, void *user_data,
                                       void *call_data);
   static void error_box_ok(MwWidget handle, void *user, void *call);
-  static void drag_and_drop(MwWidget handle, void *user_data,
-                                  void *call_data);
+  static void drag_and_drop(MwWidget handle, void *user_data, void *call_data);
   void start_dbus_filechooser(MwUserHandler handler);
 
   void scramble_tick();
